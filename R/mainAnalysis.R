@@ -12,9 +12,9 @@ source('./R/plotImages.R')
 # Parameters --------------------------------------------------------------
 
 batch_size <- 32
-epochs <- 4#200
+epochs <- 300
 data_augmentation <- FALSE
-propTestImages <- 0.1
+propTestImages <- 0.2
 
 imageHeight = 500
 imageWidth = imageHeight * 0.66
@@ -44,20 +44,25 @@ save(flowData, imagesData, file = './data/flowImageData.RData')
 # Sort by flow category and date
 imagesDataSorted <- imagesData %>% arrange( flowCatNum, datetaken )
 # Get images
-images1 <- processImages( imagesData = imagesDataSorted, imageSize = "m", imageHeight, imageWidth )
+images2 <- processImages( imagesData = imagesDataSorted, imageSize = "m", imageHeight, imageWidth )
 
 # crop images to remove trees above the stream
-images <- images1[,151:500,,]
+images1 <- images2[,151:500,,]
+# crop images to remove trees above the stream
+images <- images1[,1:200,,]
 # Reset image height
 imageHeight <- dim(images)[2]
 
 # Plot an image
+im <- deprocess_image(images2, imageNum = 88); plot(as.raster(im))
+im <- deprocess_image(images1, imageNum = 88); plot(as.raster(im))
 im <- deprocess_image(images, imageNum = 88); plot(as.raster(im))
-im2 <- deprocess_image(images, imageNum = 188); plot(as.raster(im2))
-im2 <- deprocess_image(images, imageNum = 288); plot(as.raster(im2))
 
-# plot a grid of images
-plotImageGrids(); graphics.off() #dev.off( doesn't seem to work inside a function)
+#im2 <- deprocess_image(images, imageNum = 188); plot(as.raster(im2))
+#im2 <- deprocess_image(images, imageNum = 288); plot(as.raster(im2))
+
+# plot a grid of images to  files in img/imgPNGs/
+#plotImageGrids(); graphics.off() #dev.off( doesn't seem to work inside a function)
 
 ###################################################
 
@@ -156,5 +161,5 @@ if(!data_augmentation){
   
 }
 
-
+model %>% predict_classes(x_test2)
 

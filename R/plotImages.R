@@ -1,7 +1,6 @@
 
-plotImageGrids <- function(imagesPerRow = 12){
+plotImageGrids <- function(plotWPred = FALSE,imagesPerRow = 12){
   
-  imagesPerRow <- imagesPerRow
   flowCatCounts <- as.data.frame(table(imagesDataSorted$flowCatNum))
   
   ii <- 0 # counter for imageNum
@@ -10,7 +9,7 @@ plotImageGrids <- function(imagesPerRow = 12){
     
     nRows <- flowCatCounts$Freq[i] %/% imagesPerRow + 1
     
-    png(paste0("./img/imagePNGs/images_",i,".png"),
+    png(paste0("./img/imagePNGs/images_",i,"_wPred_",plotWPred,".png"),
         width = imageWidth * imagesPerRow,
         height = imageHeight * nRows)
     op <- par(mfrow = c(nRows, imagesPerRow), mai = rep_len(0.02, 4))
@@ -24,7 +23,18 @@ plotImageGrids <- function(imagesPerRow = 12){
           ii <- ii +1
           plot( (as.raster(deprocess_image(images, imageNum = ii)) ) )
           
-          if( imagesDataSorted$testImageTF[ii] ){ textLabel <- "Validation"; textColor ='orange'} else { textLabel <- "Train"; textColor ='White' }
+          
+          if( !plotWPred ){
+            if( imagesDataSorted$testImageTF[ii] ){ textLabel <- paste0("Validation_",imagesDataSorted$flowCatNum[ii]); textColor ='orange'} else  {
+                                                    textLabel <- paste0("Test_",imagesDataSorted$flowCatNum[ii]); textColor ='White' 
+            }
+          } else
+          {
+            if( imagesDataSorted$testImageTF[ii] ){ textLabel <- paste0("Validation_",imagesDataSorted$flowCatNum[ii],"_",imagesDataSorted$p[ii]); textColor ='orange'} else  {
+                                                    textLabel <- paste0("Test_",imagesDataSorted$flowCatNum[ii]); textColor ='White' 
+            }
+          }
+          
           text( x = imageWidth/2, y = 20, labels = textLabel, cex = 4, col = textColor )
                        
           #print(c(i,ii,iii))
@@ -38,8 +48,6 @@ plotImageGrids <- function(imagesPerRow = 12){
   }
   
 }  
-
-
 
 
 # First attempt all on one graph. 

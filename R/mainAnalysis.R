@@ -12,7 +12,7 @@ source('./R/plotImages.R')
 # Parameters --------------------------------------------------------------
 
 batch_size <- 32
-epochs <- 300
+epochs <- 50
 data_augmentation <- FALSE
 propTestImages <- 0.2
 
@@ -161,5 +161,9 @@ if(!data_augmentation){
   
 }
 
-model %>% predict_classes(x_test2)
+p <- model %>% predict_classes(x_test2)
+pp <- imagesDataSorted %>% filter(testImageTF) %>% select(imageName_m,flowCatNum) %>% mutate(p=p)
+ggplot(pp, aes( flowCatNum, p)) + geom_jitter()
 
+imagesDataSorted <- left_join( imagesDataSorted, pp )
+plotImageGrids(ploitWPred = TRUE); graphics.off()

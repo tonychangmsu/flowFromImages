@@ -1,5 +1,5 @@
 
-getEnvData <- function( startDate = '2016-12-18', gage = '01169900', numFlowCategories = 3){
+getEnvData <- function( startDate = '2016-12-18', gage = '01169900'){
   
   ################################################
   # get environmental data
@@ -9,12 +9,6 @@ getEnvData <- function( startDate = '2016-12-18', gage = '01169900', numFlowCate
   
   flowData <- importDVs(gage, code = "00060", stat = "00003", sdate = startDate)
   flowData <- rename(flowData, flow = val )
-  
-  flowData$flowCat <- ( cut_number( flowData$flow, 5 ) )
-  flowData$flowCatNum <- as.numeric( cut_number( flowData$flow, numFlowCategories ) ) - 1
-  
-  ggplot( flowData, aes(flow, fill = factor(flowCatNum)) ) + geom_histogram( binwidth = 2 )  
-  table(flowData$flowCatNum)
   
   flowData$date <- as.character(flowData$dates)
   return(flowData)

@@ -1,6 +1,7 @@
 library(keras)
 library(arrayhelpers)
 library(magick)
+library(mixtools)
 library(tidyverse)
 
 source('./R/flickr_photosets_getphotos.R')
@@ -11,13 +12,9 @@ source('./R/plotImages.R')
 # Parameters --------------------------------------------------------------
 
 batch_size <- 32
-epochs <- 200
+epochs <- 4#200
 data_augmentation <- FALSE
 propTestImages <- 0.1
-
-rerunGetData <- TRUE
-
-numFlowCategories <- 4
 
 imageHeight = 500
 imageWidth = imageHeight * 0.66
@@ -26,25 +23,20 @@ imageWidth = 375
 # get flow data and images
 # only need to rerun if get new images
 
-if(rerunGetData){
-  
-  flowData <- getEnvData( startDate = '2016-12-18', gage = '01169900', numFlowCategories )
-  imagesData <- getImages(flowData, propTestImages = propTestImages, the_photoset_id = "72157681488505313") %>%
-                  select(-description)
-  
-  # remove images with NA values for flow
-  imagesData <- imagesData %>% filter(!is.na(flowCatNum))
-  
-  # remove images with ice
-  imagesData <- imagesData %>%  removeImagesWithIce()
-  
-  save(flowData, imagesData, file = './data/flowImageData.RData')
-  
-} else {
-  
-  load('./data/flowImageData.RData')
-  
-}
+flowData <- getEnvData( startDate = '2016-12-18', gage = '01169900' )
+flowData <- getFlowCategories( flowData, boundaries = c(0,10,31,79,166,9999) ) #see getFlowCategories.R for derivation of boundaries
+numFlowCategories <- length(unique(na.omit(flowData$flowCatNum)))
+
+imagesData <- getImages(flowData, propTestImages = propTestImages, the_photoset_id = "72157681488505313") %>%
+                select(-description)
+
+# remove images with NA values for flow
+imagesData <- imagesData %>% filter(!is.na(flowCatNum))
+
+# remove images with ice
+imagesData <- imagesData %>%  removeImagesWithIce()
+
+save(flowData, imagesData, file = './data/flowImageData.RData')
 
 #########################################
 # Process images
@@ -54,7 +46,7 @@ imagesDataSorted <- imagesData %>% arrange( flowCatNum, datetaken )
 # Get images
 images1 <- processImages( imagesData = imagesDataSorted, imageSize = "m", imageHeight, imageWidth )
 
-# crop images to remove trees above the stream?
+# crop images to remove trees above the stream
 images <- images1[,151:500,,]
 # Reset image height
 imageHeight <- dim(images)[2]

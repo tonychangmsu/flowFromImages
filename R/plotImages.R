@@ -1,5 +1,5 @@
 
-plotImageGrids <- function(imagesPerRow = 8){
+plotImageGrids <- function(imagesPerRow = 12){
   
   imagesPerRow <- imagesPerRow
   flowCatCounts <- as.data.frame(table(imagesDataSorted$flowCatNum))

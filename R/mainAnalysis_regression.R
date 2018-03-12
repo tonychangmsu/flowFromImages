@@ -1,3 +1,4 @@
+
 library(keras)
 library(arrayhelpers)
 library(magick)
@@ -13,9 +14,10 @@ source('./R/getFlowCategories.R')
 # Parameters --------------------------------------------------------------
 
 batch_size <- 32
-epochs <- 50
+epochs <- 10
 data_augmentation <- FALSE
 propTestImages <- 0.2
+convertToGrayscale <- TRUE
 
 imageHeight = 500
 imageWidth = imageHeight * 0.66
@@ -31,13 +33,18 @@ flowData <- getFlowCategories( flowData, boundaries = c(0,11,45,120,9999) ) #see
 numFlowCategories <- length(unique(na.omit(flowData$flowCatNum)))
 
 imagesData <- getImages(flowData, propTestImages = propTestImages, the_photoset_id = "72157681488505313") %>%
-                select(-description)
+  select(-description)
 
 # remove images with NA values for flow
 imagesData <- imagesData %>% filter(!is.na(flowCatNum))
 
 # remove images with ice
-imagesData <- imagesData %>%  removeImagesWithIce()
+imagesData <- imagesData %>% removeImagesWithIce()
+
+# remove images with bad flow estimates from visual inspection
+imagesData <- imagesData %>% removeImagesWithBadFlowEst()
+
+imagesData <- imagesData %>% removeImagesNotCentered()
 
 save(flowData, imagesData, file = './data/flowImageData.RData')
 
@@ -45,7 +52,7 @@ save(flowData, imagesData, file = './data/flowImageData.RData')
 # Process images
 
 # Sort by flow category and date
-imagesDataSorted <- imagesData %>% arrange( flowCatNum, datetaken )
+imagesDataSorted <- imagesData %>% arrange( flow, datetaken )
 # Get images
 images2 <- processImages( imagesData = imagesDataSorted, imageSize = "m", imageHeight, imageWidth )
 
@@ -56,8 +63,10 @@ images <- images1[,1:200,,]
 # Reset image height
 imageHeight <- dim(images)[2]
 
+if(convertToGrayscale) for(i in 1:nrow(images)){ images[i,,,] <- grayscale(as.cimg(images[i,,,])) }
+
 # Plot an image
-im <- deprocess_image(images2, imageNum = 88); plot(as.raster(im))
+im <- deprocess_image(images2, imageNum = 88); plot(grayscale(as.cimg(im)))
 im <- deprocess_image(images1, imageNum = 88); plot(as.raster(im))
 im <- deprocess_image(images, imageNum = 88); plot(as.raster(im))
 
@@ -75,8 +84,8 @@ flowDataCategorical <- to_categorical( imagesData$flowCatNum, numFlowCategories)
 x_train2 <- images[!imagesData$testImageTF,,,]
 x_test2 <- images[imagesData$testImageTF,,,]
 
-y_train2 <- flowDataCategorical[!imagesData$testImageTF,]
-y_test2 <- flowDataCategorical[imagesData$testImageTF,]
+y_train2 <- imagesData$flow[!imagesData$testImageTF]
+y_test2 <- imagesData$flow[imagesData$testImageTF]
 
 # Defining Model ----------------------------------------------------------
 # https://keras.rstudio.com/articles/examples/cifar10_cnn.html
@@ -118,15 +127,13 @@ model %>%
   layer_dropout(0.5) %>%
   
   # Outputs from dense layer are projected onto numFlowCategories unit output layer
-  layer_dense(numFlowCategories)# %>%
-  #layer_activation("softmax")
-
-opt <- optimizer_rmsprop(lr = 0.0001, decay = 1e-6)
+  layer_dense(1)# %>%
+#layer_activation("softmax")
 
 model %>% compile(
-  loss = "categorical_crossentropy",
-  optimizer = opt,
-  metrics = "accuracy"
+  optimizer = "rmsprop",
+  loss = "mse",
+  metrics = c("mae")
 )
 
 # Training ----------------------------------------------------------------
@@ -140,7 +147,7 @@ if(!data_augmentation){
       epochs = epochs,
       validation_data = list(x_test2, y_test2),
       shuffle = TRUE
-  )
+    )
   
 } else {
   
@@ -164,9 +171,10 @@ if(!data_augmentation){
   
 }
 
-p <- model %>% predict_classes(x_test2)
-pp <- imagesDataSorted %>% filter(testImageTF) %>% select(imageName_m,flowCatNum) %>% mutate(p=p)
-ggplot(pp, aes( flowCatNum, p)) + geom_jitter()
+p <- model %>% predict(x_test2)
+pp <- imagesDataSorted %>% filter(testImageTF) %>% select(imageName_m,flow)
+pp$p <- p[,1]
+ggplot(pp, aes( flow, p)) + geom_point()
 
 imagesDataSorted <- left_join( imagesDataSorted, pp )
-plotImageGrids(plotWPred = TRUE); #  graphics.off()
+plotImageGrids_Regression(plotWPred = TRUE) #  graphics.off()

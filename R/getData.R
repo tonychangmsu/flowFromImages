@@ -37,8 +37,8 @@ getImages <- function(flowData, propTestImages = 0.1, the_photoset_id = "7215768
   
     for( i in 1:nrow(xx) ){
       
-      xx$imageName_s <- paste0("./img/sawmill_",substr(xx$datetaken[i], 1, 10),'_s.jpg')
-      xx$imageName_m <- paste0("./img/sawmill_",substr(xx$datetaken[i], 1, 10),'_m.jpg')
+      xx$imageName_s[i] <- paste0("./img/sawmill_",substr(xx$datetaken[i], 1, 10),'_s.jpg')
+      xx$imageName_m[i] <- paste0("./img/sawmill_",substr(xx$datetaken[i], 1, 10),'_m.jpg')
 
       # small images
       if( !file.exists(xx$imageName_s[i]) ) download.file(xx$url_s[i], destfile = xx$imageName_s[i], mode = "wb")

@@ -1,5 +1,5 @@
 
-plotImageGrids <- function(plotWPred = FALSE,imagesPerRow = 12){
+plotImageGrids <- function(plotWPred = FALSE, imagesPerRow = 12){
   
   flowCatCounts <- as.data.frame(table(imagesDataSorted$flowCatNum))
   
@@ -9,7 +9,7 @@ plotImageGrids <- function(plotWPred = FALSE,imagesPerRow = 12){
     
     nRows <- flowCatCounts$Freq[i] %/% imagesPerRow + 1
     
-    png(paste0("./img/imagePNGs/images_",i,"_wPred_",plotWPred,".png"),
+    png(paste0("./img/imagePNGs/images_",i,"_wPred",plotWPred,".png"),
         width = imageWidth * imagesPerRow,
         height = imageHeight * nRows)
     op <- par(mfrow = c(nRows, imagesPerRow), mai = rep_len(0.02, 4))
@@ -48,6 +48,58 @@ plotImageGrids <- function(plotWPred = FALSE,imagesPerRow = 12){
   }
   
 }  
+
+
+plotImageGrids_Regression <- function(plotWPred = FALSE, imagesPerRow = 7, imagesPerColumn = 7){
+  
+  numFigs <- nrow(imagesDataSorted) %/% (imagesPerRow * imagesPerColumn) + 1
+  
+  ii <- 0 # counter for imageNum
+  for (i in 1:numFigs) {
+    print(paste0("Fig ",i,' out of ',numFigs))
+    
+    nRows <- imagesPerColumn
+    
+    png(paste0("./img/imagePNGs/images_",i,"_wPred_Regression",plotWPred,".png"),
+        width = imageWidth * imagesPerRow,
+        height = imageHeight * nRows)
+    op <- par(mfrow = c(nRows, imagesPerRow), mai = rep_len(0.02, 4))
+    
+    iii <- 0 # counter for images within flowCat
+    for (col in 0:(nRows-1)) {
+      for (row in 0:(imagesPerRow-1)) {
+        
+        iii <- iii + 1
+        if(ii < nrow(imagesDataSorted)) {
+          ii <- ii +1
+          print(c(ii,iii,round(imagesDataSorted$flow[ii],1),round(imagesDataSorted$p[ii],1)))
+          plot( (as.raster(deprocess_image(images, imageNum = ii)) ) )
+          
+          if( !plotWPred ){
+            if( imagesDataSorted$testImageTF[ii] ){ textLabel <- paste0(imagesDataSorted$date[ii],"_Val_",round(imagesDataSorted$flow[ii],1)); textColor ='orange'} else  {
+              textLabel <- paste0(imagesDataSorted$date[ii],"_Test_",round(imagesDataSorted$flow[ii],1)); textColor ='White' 
+            }
+          } else
+          {
+            if( imagesDataSorted$testImageTF[ii] ){ textLabel <- paste0(imagesDataSorted$date[ii],"_Val_",round(imagesDataSorted$flow[ii],1),"_",round(imagesDataSorted$p[ii],1)); textColor ='orange'} else  {
+              textLabel <- paste0(imagesDataSorted$date[ii],"_Test_",round(imagesDataSorted$flow[ii],1)); textColor ='White' 
+            }
+          }
+          
+          text( x = imageWidth/2, y = 20, labels = textLabel, cex = 4, col = textColor )
+          
+          #print(c(i,ii,iii))
+        }
+        
+      }
+    }
+    
+    par(op)
+    dev.off()
+  }
+  
+}  
+
 
 
 # First attempt all on one graph. 

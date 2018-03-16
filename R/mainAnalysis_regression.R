@@ -74,13 +74,18 @@ images <- images1[,1:200,,]
 # Reset image height
 imageHeight <- dim(images)[2]
 
+numcolors <- 3
+
 # convert image to grayscale
 if(convertToGrayscale){
   for(i in 1:nrow(images)){ 
     images[i,,,] <- grayscale(as.cimg(images[i,,,])) 
   }
   # reduce color index dim to one (all three are the same grayscale)
-  images <- array(images, dim=c(dim(images)[1],dim(images)[2],dim(images)[3],1))
+  # seems to cause problems with the layer_2d_conv
+  #images <- array(images, dim=c(dim(images)[1],dim(images)[2],dim(images)[3]))
+  numColors <- 1
+  images <- array_reshape(images[,,,1],c(dim(images)[1],dim(images)[2],dim(images)[3],numColors))
 }  
 
 # Plot an image
@@ -99,8 +104,12 @@ im <- deprocess_image(images, imageNum = 88); plot(as.raster(im))
 # following structure from https://keras.rstudio.com/ MNIST Example 
 flowDataCategorical <- to_categorical( imagesData$flowCatNum, numFlowCategories)
 
-x_train2 <- images[!imagesData$testImageTF,,,]
-x_test2 <- images[imagesData$testImageTF,,,]
+numTrain <- dim(images[!imagesData$testImageTF,,,])[1]
+numTest <- dim(images[imagesData$testImageTF,,,])[1]
+x_train2 <- array_reshape(images[!imagesData$testImageTF,,,],c(numTrain,dim(images)[2],dim(images)[3],numcolors)) # force last index to be 1 for grayscale
+x_test2 <- array_reshape(images[imagesData$testImageTF,,,],c(numTest,dim(images)[2],dim(images)[3],numColors))
+#x_train2 <- images[!imagesData$testImageTF,,]
+#x_test2 <- images[imagesData$testImageTF,,]
 
 y_train2 <- imagesData$flowStd[!imagesData$testImageTF]
 y_test2 <- imagesData$flowStd[imagesData$testImageTF]
@@ -116,6 +125,7 @@ model %>%
   layer_conv_2d(
     filter = 32, kernel_size = c(3,3), padding = "same", 
     input_shape = c(dim(x_train2)[2],dim(x_train2)[3],dim(x_train2)[4])
+#    input_shape = c(dim(x_train2)[2],dim(x_train2)[3])
   ) %>%
   layer_activation("relu") %>%
   

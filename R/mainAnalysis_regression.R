@@ -3,6 +3,7 @@ library(keras)
 library(arrayhelpers)
 library(magick)
 library(mixtools)
+library(imager)
 library(tidyverse)
 
 source('./R/flickr_photosets_getphotos.R')
@@ -10,11 +11,12 @@ source('./R/getData.R')
 source('./R/imageProcessing.R')
 source('./R/plotImages.R')
 source('./R/getFlowCategories.R')
+source('./R/adjFlowsVisually.R')
 
 # Parameters --------------------------------------------------------------
 
 batch_size <- 32
-epochs <- 10
+epochs <- 20 # of 'iterations'
 data_augmentation <- FALSE
 propTestImages <- 0.2
 convertToGrayscale <- TRUE
@@ -22,6 +24,7 @@ convertToGrayscale <- TRUE
 imageHeight = 500
 imageWidth = imageHeight * 0.66
 imageWidth = 375
+
 ###########################################
 # get flow data and images
 # only need to rerun if get new images
@@ -29,6 +32,9 @@ imageWidth = 375
 flowData <- getEnvData( startDate = '2016-12-18', gage = '01169900' )
 #flowData <- getFlowCategories( flowData, boundaries = c(0,10,31,79,166,9999) ) #see getFlowCategories.R for derivation of boundaries
 flowData <- getFlowCategories( flowData, boundaries = c(0,11,45,120,9999) ) #see getFlowCategories.R for derivation of boundaries
+
+# adjust flow estimates based on visual inspection of images?
+flowData <- adjustFlowsVisually(flowData)
 
 numFlowCategories <- length(unique(na.omit(flowData$flowCatNum)))
 
@@ -63,6 +69,7 @@ images <- images1[,1:200,,]
 # Reset image height
 imageHeight <- dim(images)[2]
 
+#imagesGS <- array(NA, dim=dim(images))
 if(convertToGrayscale) for(i in 1:nrow(images)){ images[i,,,] <- grayscale(as.cimg(images[i,,,])) }
 
 # Plot an image

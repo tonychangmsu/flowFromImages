@@ -8,7 +8,7 @@ getEnvData <- function( startDate = '2016-12-18', gage = '01169900'){
   # gage from // south river, conway
   
   flowData <- importDVs(gage, code = "00060", stat = "00003", sdate = startDate)
-  flowData <- rename(flowData, flow = val )
+  flowData <- dplyr:::rename(flowData, flow = val )
   
   flowData$date <- as.character(flowData$dates)
   return(flowData)

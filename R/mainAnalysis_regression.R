@@ -16,7 +16,7 @@ source('./R/adjFlowsVisually.R')
 # Parameters --------------------------------------------------------------
 
 batch_size <- 32
-epochs <- 20 # of 'iterations'
+epochs <- 10 # of 'iterations'
 data_augmentation <- FALSE
 propTestImages <- 0.2
 convertToGrayscale <- TRUE
@@ -33,7 +33,7 @@ flowData <- getEnvData( startDate = '2016-12-18', gage = '01169900' )
 #flowData <- getFlowCategories( flowData, boundaries = c(0,10,31,79,166,9999) ) #see getFlowCategories.R for derivation of boundaries
 flowData <- getFlowCategories( flowData, boundaries = c(0,11,45,120,9999) ) #see getFlowCategories.R for derivation of boundaries
 
-# adjust flow estimates based on visual inspection of images?
+# adjust flow estimates based on visual inspection of images. Comment out for no adjustment
 flowData <- adjustFlowsVisually(flowData)
 
 numFlowCategories <- length(unique(na.omit(flowData$flowCatNum)))
@@ -52,6 +52,11 @@ imagesData <- imagesData %>% removeImagesWithBadFlowEst()
 
 imagesData <- imagesData %>% removeImagesNotCentered()
 
+# standardize flow data for training data (!flowData$testImageTF) only
+meanFlow <- mean(imagesData$flow[!imagesData$testImageTF],na.rm = T)
+sdFlow <- sd(imagesData$flow[!imagesData$testImageTF], na.rm = T)
+imagesData$flowStd <- (imagesData$flow - meanFlow) / sdFlow
+
 save(flowData, imagesData, file = './data/flowImageData.RData')
 
 #########################################
@@ -69,8 +74,14 @@ images <- images1[,1:200,,]
 # Reset image height
 imageHeight <- dim(images)[2]
 
-#imagesGS <- array(NA, dim=dim(images))
-if(convertToGrayscale) for(i in 1:nrow(images)){ images[i,,,] <- grayscale(as.cimg(images[i,,,])) }
+# convert image to grayscale
+if(convertToGrayscale){
+  for(i in 1:nrow(images)){ 
+    images[i,,,] <- grayscale(as.cimg(images[i,,,])) 
+  }
+  # reduce color index dim to one (all three are the same grayscale)
+  images <- array(images, dim=c(dim(images)[1],dim(images)[2],dim(images)[3],1))
+}  
 
 # Plot an image
 im <- deprocess_image(images2, imageNum = 88); plot(grayscale(as.cimg(im)))
@@ -91,8 +102,8 @@ flowDataCategorical <- to_categorical( imagesData$flowCatNum, numFlowCategories)
 x_train2 <- images[!imagesData$testImageTF,,,]
 x_test2 <- images[imagesData$testImageTF,,,]
 
-y_train2 <- imagesData$flow[!imagesData$testImageTF]
-y_test2 <- imagesData$flow[imagesData$testImageTF]
+y_train2 <- imagesData$flowStd[!imagesData$testImageTF]
+y_test2 <- imagesData$flowStd[imagesData$testImageTF]
 
 # Defining Model ----------------------------------------------------------
 # https://keras.rstudio.com/articles/examples/cifar10_cnn.html
@@ -133,7 +144,7 @@ model %>%
   layer_activation("relu") %>%
   layer_dropout(0.5) %>%
   
-  # Outputs from dense layer are projected onto numFlowCategories unit output layer
+  # Outputs from dense layer are projected 
   layer_dense(1)# %>%
 #layer_activation("softmax")
 

@@ -10,7 +10,7 @@ To estimate flow using regression use 'mainAnalysis_regression.R'
 Original images are accessed from flickr and stored in the /img directory
 Subsetted and processed images can be viewed as png files in the /img/imagePNGs directory (see below for examples)
 
-##Low flow images
+## Low flow images
 ![Screenshot](images_2_wPred_RegressionFALSE.png)
 
 ## High flow images

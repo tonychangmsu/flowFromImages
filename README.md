@@ -8,10 +8,12 @@ To estimate flow using flow categories use 'mainAnalysis_categorical.R'.
 To estimate flow using regression use 'mainAnalysis_regression.R'
 
 Original images are accessed from flickr and stored in the /img directory
-Subsetted and processed images can be viewed as png files in the /img/imagePNGs directory
+Subsetted and processed images can be viewed as png files in the /img/imagePNGs directory (see below for examples)
 
+##Low flow images
+![Screenshot](images_2_wPred_RegressionFALSE.png)
 
-[[https://github.com/bletcher/flowFromImages/blob/master/images_1_wPred_RegressionFALSE.png]]
-![alt text](https://github.com/bletcher/flowFromImages/images_1_wPred_RegressionFALSE.png)
+## High flow images
+![Screenshot](images_6_wPred_RegressionFALSE.png)
 
 As of 3/19/18, the model are overfit. Need to develop better models.

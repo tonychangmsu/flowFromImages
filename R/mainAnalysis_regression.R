@@ -161,7 +161,7 @@ model %>%
   
   # Outputs from dense layer are projected 
   layer_dense(1) #%>%
-  #layer_activation("linear")
+  #layer_activation("linear") not needed, default
 
 # page 300
 model <- keras_model_sequential() %>%

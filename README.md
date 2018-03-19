@@ -11,7 +11,7 @@ Original images are accessed from flickr and stored in the /img directory
 Subsetted and processed images can be viewed as png files in the /img/imagePNGs directory
 
 
-https://github.com/bletcher/flowFromImages/images_1_wPred_RegressionFALSE.png
+[[https://github.com/bletcher/flowFromImages/blob/master/images_1_wPred_RegressionFALSE.png]]
 
 
 As of 3/19/18, the model are overfit. Need to develop better models.

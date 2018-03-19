@@ -73,7 +73,8 @@ plotImageGrids_Regression <- function(plotWPred = FALSE, imagesPerRow = 7, image
         if(ii < nrow(imagesDataSorted)) {
           ii <- ii +1
           print(c(ii,iii,round(imagesDataSorted$flow[ii],1),round(imagesDataSorted$p[ii],1)))
-          plot( (as.raster(deprocess_image(images, imageNum = ii)) ) )
+          #plot( (as.raster(deprocess_image(images, imageNum = ii)) ) )
+          plot( (as.raster(images[ii,,,])) ) # for grayscale
           
           if( !plotWPred ){
             if( imagesDataSorted$testImageTF[ii] ){ textLabel <- paste0(imagesDataSorted$date[ii],"_Val_",round(imagesDataSorted$flow[ii],1)); textColor ='orange'} else  {

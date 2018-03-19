@@ -231,4 +231,4 @@ pp$p <- p[,1]
 ggplot(pp, aes( flow, p)) + geom_point()
 
 imagesDataSorted <- left_join( imagesDataSorted, pp )
-plotImageGrids_Regression(plotWPred = TRUE) #  graphics.off()
+plotImageGrids_Regression(plotWPred = FALSE) #  graphics.off()

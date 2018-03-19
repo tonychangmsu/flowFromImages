@@ -6,6 +6,7 @@ library(mixtools)
 library(imager)
 library(tidyverse)
 
+# will convert these to functions in the project package
 source('./R/flickr_photosets_getphotos.R')
 source('./R/getData.R')
 source('./R/imageProcessing.R')
@@ -69,12 +70,12 @@ images2 <- processImages( imagesData = imagesDataSorted, imageSize = "m", imageH
 
 # crop images to remove trees above the stream
 images1 <- images2[,151:500,,]
-# crop images to remove trees above the stream
+# crop images to remove the lower part of the stream
 images <- images1[,1:200,,]
 # Reset image height
 imageHeight <- dim(images)[2]
 
-numcolors <- 3
+numColors <- 3
 
 # convert image to grayscale
 if(convertToGrayscale){
@@ -106,7 +107,7 @@ flowDataCategorical <- to_categorical( imagesData$flowCatNum, numFlowCategories)
 
 numTrain <- dim(images[!imagesData$testImageTF,,,])[1]
 numTest <- dim(images[imagesData$testImageTF,,,])[1]
-x_train2 <- array_reshape(images[!imagesData$testImageTF,,,],c(numTrain,dim(images)[2],dim(images)[3],numcolors)) # force last index to be 1 for grayscale
+x_train2 <- array_reshape(images[!imagesData$testImageTF,,,],c(numTrain,dim(images)[2],dim(images)[3],numColors)) # force last index to be 1 for grayscale
 x_test2 <- array_reshape(images[imagesData$testImageTF,,,],c(numTest,dim(images)[2],dim(images)[3],numColors))
 #x_train2 <- images[!imagesData$testImageTF,,]
 #x_test2 <- images[imagesData$testImageTF,,]
@@ -130,15 +131,19 @@ model %>%
   layer_activation("relu") %>%
   
   # Second hidden layer
-  layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
+  layer_conv_2d(filter = 64, kernel_size = c(3,3)) %>%
+  layer_activation("relu") %>%
+  # Second hidden layer
+  layer_conv_2d(filter = 128, kernel_size = c(3,3)) %>%
   layer_activation("relu") %>%
   
+    
   # Use max pooling
   layer_max_pooling_2d(pool_size = c(2,2)) %>%
   layer_dropout(0.25) %>%
   
   # 2 additional hidden 2D convolutional layers
-  layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = "same") %>%
+  layer_conv_2d(filter = 64, kernel_size = c(3,3), padding = "same") %>%
   layer_activation("relu") %>%
   layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
   layer_activation("relu") %>%
@@ -155,8 +160,29 @@ model %>%
   layer_dropout(0.5) %>%
   
   # Outputs from dense layer are projected 
-  layer_dense(1)# %>%
-#layer_activation("softmax")
+  layer_dense(1) #%>%
+  #layer_activation("linear")
+
+# page 300
+model <- keras_model_sequential() %>%
+  layer_separable_conv_2d(filters = 32, kernel_size = 3,
+                          activation = "relu",
+                          input_shape = c(dim(x_train2)[2],dim(x_train2)[3],dim(x_train2)[4])) %>%
+  layer_separable_conv_2d(filters = 64, kernel_size = 3,
+                          activation = "relu") %>%
+  layer_max_pooling_2d(pool_size = 2) %>%
+  layer_separable_conv_2d(filters = 64, kernel_size = 3,
+                          activation = "relu") %>%
+  layer_separable_conv_2d(filters = 128, kernel_size = 3,
+                          activation = "relu") %>%
+  layer_max_pooling_2d(pool_size = 2) %>%
+  layer_separable_conv_2d(filters = 64, kernel_size = 3,
+                          activation = "relu") %>%
+  layer_separable_conv_2d(filters = 128, kernel_size = 3,
+                          activation = "relu") %>%
+  layer_global_average_pooling_2d() %>%
+  layer_dense(units = 32, activation = "relu") %>%
+  layer_dense(1)
 
 model %>% compile(
   optimizer = "rmsprop",
@@ -192,7 +218,7 @@ if(!data_augmentation){
   
   model %>% fit_generator(
     flow_images_from_data(x_train2, y_train2, datagen, batch_size = batch_size),
-    steps_per_epoch = as.integer(50000/batch_size), 
+    steps_per_epoch = as.integer(round(nrow(images)/batch_size)), 
     epochs = epochs, 
     validation_data = list(x_test2, y_test2)
   )

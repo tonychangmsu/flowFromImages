@@ -8,7 +8,7 @@ To estimate flow using flow categories use 'mainAnalysis_categorical.R'.
 To estimate flow using regression use 'mainAnalysis_regression.R'
 
 Original images are accessed from flickr and stored in the /img directory
-Subsetted and processed images can be viewed as png files in the /img/imagePNGs directory (see below for examples)
+Subsetted and processed images can be viewed as png files in the /img/imagePNGs directory (see below for examples - estimated flow from a nearby gage is the last number in each image).
 
 ## Low flow images
 ![Screenshot](images_2_wPred_RegressionFALSE.png)

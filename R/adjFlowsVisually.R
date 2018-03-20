@@ -16,6 +16,7 @@ adjustFlowsVisually <- function(f){
   f$flow[f$date == '2017-04-21'] <- 60
   f$flow[f$date == '2017-10-29'] <- 70
   f$flow[f$date == '2017-10-30'] <- 300
+  f$flow[f$date == '2018-02-13'] <- 190
   
   return(f)
 }

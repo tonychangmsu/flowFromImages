@@ -108,99 +108,54 @@ flowDataCategorical <- to_categorical( imagesData$flowCatNum, numFlowCategories)
 
 numTrain <- dim(images[!imagesData$testImageTF,,,])[1]
 numTest <- dim(images[imagesData$testImageTF,,,])[1]
-x_train2 <- array_reshape(images[!imagesData$testImageTF,,,],c(numTrain,dim(images)[2],dim(images)[3],numColors)) # force last index to be 1 for grayscale
-x_test2 <- array_reshape(images[imagesData$testImageTF,,,],c(numTest,dim(images)[2],dim(images)[3],numColors))
-#x_train2 <- images[!imagesData$testImageTF,,]
-#x_test2 <- images[imagesData$testImageTF,,]
 
 y_train2 <- flowDataCategorical[!imagesData$testImageTF,]
 y_test2 <- flowDataCategorical[imagesData$testImageTF,]
 
-# Defining Model ----------------------------------------------------------
-# https://keras.rstudio.com/articles/examples/cifar10_cnn.html
-# Initialize sequential model
+x_train2 <- array_reshape(images[!imagesData$testImageTF,,,],c(numTrain,dim(images)[2] * dim(images)[3])) 
+x_test2 <- array_reshape(images[imagesData$testImageTF,,,],c(numTest,dim(images)[2] * dim(images)[3]))
+
 model <- keras_model_sequential()
-
 model %>%
-
-  # Start with hidden 2D convolutional layer being fed 32x32 pixel images
-  layer_conv_2d(
-    filter = 64, kernel_size = c(3,3), padding = "same",
-    input_shape = c(dim(x_train2)[2],dim(x_train2)[3],dim(x_train2)[4])
-  ) %>%
+  layer_dense(units=256,
+              input_shape = c(dim(x_train2)[2])) %>%
   layer_activation("relu") %>%
-
-  # # Second hidden layer
-   layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
-   layer_activation("relu") %>%
-  #
-  # # Use max pooling
-   layer_max_pooling_2d(pool_size = c(2,2)) %>%
-   layer_dropout(0.25) %>%
-  #
-  # # 2 additional hidden 2D convolutional layers
-   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = "same") %>%
-   layer_activation("relu") %>%
-   layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
-   layer_activation("relu") %>%
-  #
-  # # Use max pooling once more
-   layer_max_pooling_2d(pool_size = c(2,2)) %>%
-   layer_dropout(0.25) %>%
-  #
-  # # Flatten max filtered output into feature vector
-  # # and feed into dense layer
-   layer_flatten() %>%
-   layer_dense(512) %>%
-   layer_activation("relu") %>%
-   layer_dropout(0.5) %>%
-  #
-  # Outputs from dense layer are projected onto numFlowCategories unit output layer
+  layer_dropout(0.5) %>%
+  
+  layer_dense(128) %>%
+  layer_activation("relu") %>%
+  layer_dropout(0.4) %>%
+  
+  layer_dense(64) %>%
+  layer_activation("relu") %>%
+  layer_dropout(0.25) %>%
+  
   layer_dense(numFlowCategories) %>%
-  layer_activation("softmax")
+  layer_activation("softmax")  
 
 opt <- optimizer_rmsprop(lr = 0.0001, decay = 1e-6)
 
 model %>% compile(
   loss = "categorical_crossentropy",
-  optimizer = opt,
-  metrics = "accuracy"
+  optimizer = optimizer_rmsprop(), #opt,
+  metrics = c("accuracy")
 )
 
 # Training ----------------------------------------------------------------
 
-if(!data_augmentation){
-  
-  history <- 
-    model %>% fit(
-      x_train2, y_train2,
-      batch_size = batch_size,
-      epochs = epochs,
-      validation_data = list(x_test2, y_test2),
-      shuffle = TRUE
-  )
-  
-} else {
-  
-  datagen <- image_data_generator(
-    featurewise_center = TRUE,
-    featurewise_std_normalization = TRUE,
-    rotation_range = 20,
-    width_shift_range = 0.2,
-    height_shift_range = 0.2,
-    horizontal_flip = TRUE
-  )
-  
-  datagen %>% fit_image_data_generator(x_train2)
-  
-  model %>% fit_generator(
-    flow_images_from_data(x_train2, y_train2, datagen, batch_size = batch_size),
-    steps_per_epoch = as.integer(50000/batch_size), 
-    epochs = epochs, 
-    validation_data = list(x_test2, y_test2)
-  )
-  
-}
+history <- 
+  model %>% fit(
+    x_train2, y_train2,
+    batch_size = 32,
+    epochs = 9,
+    validation_data = list(x_test2, y_test2),
+    shuffle = TRUE
+)
+
+
+
+
+
 
 p <- model %>% predict_classes(x_test2)
 pp <- imagesDataSorted %>% filter(testImageTF) %>% select(imageName_m,flowCatNum) %>% mutate(p=p)

@@ -125,13 +125,13 @@ model %>%
   
   # Start with hidden 2D convolutional layer being fed 32x32 pixel images
   layer_conv_2d(
-    filter = 200, kernel_size = c(3,3), padding = "same", 
+    filter = 64, kernel_size = c(3,3), padding = "same", 
     input_shape = c(dim(x_train2)[2],dim(x_train2)[3],dim(x_train2)[4])
   ) %>%
   layer_activation("relu") %>%
   
   # # Second hidden layer
-   layer_conv_2d(filter = 100, kernel_size = c(3,3)) %>%
+   layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
    layer_activation("relu") %>%
   # 
   # # Use max pooling
@@ -139,9 +139,9 @@ model %>%
    layer_dropout(0.25) %>%
   # 
   # # 2 additional hidden 2D convolutional layers
-   layer_conv_2d(filter = 100, kernel_size = c(3,3), padding = "same") %>%
+   layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = "same") %>%
    layer_activation("relu") %>%
-   layer_conv_2d(filter = 50, kernel_size = c(3,3)) %>%
+   layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
    layer_activation("relu") %>%
   # 
   # # Use max pooling once more
